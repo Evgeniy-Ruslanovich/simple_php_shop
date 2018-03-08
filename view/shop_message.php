@@ -3,9 +3,12 @@
 /**
  * 
  */
-foreach ($categories_array as $value) {
+if (isset($show_categories) && $show_categories) {
+	foreach ($categories_array as $value) {
 	echo '<a href="./?category=' . $value['id'] . '">' .  $value['category_name'] . '</a>&nbsp';
+	}
 }
+
 ?>
 <br><br>
 <h3><?= $message ?></h3>

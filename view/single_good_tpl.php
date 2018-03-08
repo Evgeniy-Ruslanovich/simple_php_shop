@@ -34,6 +34,7 @@ if (isset($single_good_data['message'])) {
 ?>
 <form method="post" action="./?ctrl=ordering&action=add_to_cart">
 	<input type="hidden" name="good_id" value="<?= $single_good_data['id'] ?>">
+	<input type="hidden" name="product_name" value="<?= $single_good_data['product_name'] ?>">
 	<button>Добавить в корзину</button>
 </form>
 <?php

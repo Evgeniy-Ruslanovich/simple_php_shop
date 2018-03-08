@@ -18,6 +18,7 @@ if (isset($_GET['good'])) {
 		}
 	} else {
 		$template = 'shop_message.php';
+		$data['show_categories'] = true;
 		$data['message'] = 'Такой товар не найден.';
 		$data['suggested_link'] = '<a href="./">На главную</a>';
 	}

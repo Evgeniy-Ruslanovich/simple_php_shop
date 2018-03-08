@@ -4,7 +4,7 @@
 */
 require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'database_master.class.php';
 
-class Goods_data extends Database_master
+class Orders_data extends Database_master
 {
 	/*
 		$params = array(

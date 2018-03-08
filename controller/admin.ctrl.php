@@ -7,7 +7,7 @@ if (!$security_pass->auth_status) {
 } else {
 	if ($security_pass->get_role() === 1) {
 		$subctrl = 'access_denied';
-		$reason = 'have_not_permission';
+		$action = 'have_not_permission';
 	} else {
 		$subctrl = 'dashboard';
 		if (isset($_GET['subctrl'])) {
