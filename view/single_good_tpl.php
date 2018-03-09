@@ -17,6 +17,7 @@ foreach ($categories_array as $value) {
 </div>
 <h1><?= $single_good_data['product_name'] ?></h1>
 <p><?= $single_good_data['product_description'] ?> </p>
+<p>Цена: <b><?= $single_good_data['price'] ?></b></p>
 <p>Категория: <a href="./?category=<?= $single_good_data['category'] ?>"><?= $single_good_data['category_name'] ?></a></p>
 <!-- <p>ID: <?= $single_good_data['id'] ?> </p> -->
 <!-- <p><a href="./?edit=<?= $single_good_data['id'] ?>">Редактировать</a></p>
@@ -35,6 +36,7 @@ if (isset($single_good_data['message'])) {
 <form method="post" action="./?ctrl=ordering&action=add_to_cart">
 	<input type="hidden" name="good_id" value="<?= $single_good_data['id'] ?>">
 	<input type="hidden" name="product_name" value="<?= $single_good_data['product_name'] ?>">
+	<input type="hidden" name="price" value="<?= $single_good_data['price'] ?>">
 	<button>Добавить в корзину</button>
 </form>
 <?php

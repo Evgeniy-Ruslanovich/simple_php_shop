@@ -24,7 +24,7 @@ if(isset($_GET['action'])) {
 			break;
 	}
 }
-
+/*
 switch ($action) {
 	case 'logout':
 		$security_pass->logout();
@@ -43,7 +43,7 @@ switch ($action) {
 	default:
 		# code...
 		break;
-}
+}*/
 
 if ($action === 'logout') {
 	$security_pass->logout();
