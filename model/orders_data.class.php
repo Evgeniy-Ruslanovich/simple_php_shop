@@ -45,11 +45,11 @@ class Orders_data extends Database_master
 
 
 
-	public function get_public_goods_list($goods_params) {
-		$query_params = array('table' => 'goods');
+	public function get_public_orders_list($orders_params) {
+		$query_params = array('table' => 'orders');
 		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
 		//$query_params['hidden'] = 0; //
-		$query_params['where'] = $this->build_where_statement_for_public_goods_list($goods_params);
+		$query_params['where'] = $this->build_where_statement_for_public_goods_list($orders_params);
 		//$query_params['order_by'] = null;
 		$result = $this->read_any_table($query_params);
 
@@ -57,15 +57,15 @@ class Orders_data extends Database_master
 
 	}
 
-	public function get_public_single_good($good_id) {
-		$query_params = array('table' => 'goods');
+	public function get_public_single_order($order_id) {
+		$query_params = array('table' => 'orders');
 		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo', 'product_description');
-		$query_params['where'] = 'WHERE `id`=\'' . (int)$good_id . '\' ';
+		$query_params['where'] = 'WHERE `id`=\'' . (int)$order_id . '\' ';
 		$result = $this->read_any_table($query_params)[0];
 		return $result;
 	}
 	
-	public function get_admin_single_good($good_id) {
+	public function get_admin_single_order($order_id) {
 		$query_params = array('table' => 'goods');
 		//$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo', 'product_description');
 		$query_params['where'] = 'WHERE `id`=\'' . (int)$good_id . '\' ';
@@ -99,11 +99,53 @@ class Orders_data extends Database_master
 		return $where_statement;
 	}
 
+	public function save_draft()
+	{
+		global $security_pass;
+		global $link;
+		$this->hello_test();
+		$order_params = array('table' => 'orders');
+		$order_params['keyvalue'] = array(
+					array(
+					'user_id' => $security_pass->get_user_id(),
+					'order_status' => 1
+					)/*,
+					array(
+					'user_id' => $security_pass->get_user_id(),
+					'order_status' => 1
+					)*/
+				);
+			 //тут должен быть массив в массиве, потому что можно вносить новые записи по одной, а можно пачкой (как, например, товары в заказе), и если пачкой - то это массив массивов. А если по одной - то это опять же массив с одним элементом, тоже массивом.
+		$result = $this->insert_new_entry($order_params);
+		var_dump($result); echo " Результат создания нового заказа<br>";
+		$order_id = mysqli_insert_id($link); //вообще можно это в самом скуэль-запросе сделать https://dev.mysql.com/doc/refman/5.7/en/getting-unique-id.html
+		/*АЙДИ ТОВАРА СОХРАНЯЮТСЯ КАК КЛЮЧИ МАССИВА cart В СЕССИИ*/
+		echo $order_id . " -Последний айдишник<br>";
+		$order_goods_params = array('table' => 'order_goods');
+		$order_params['keyvalue'] = array();/*
+			array('order_id' => $order_id, = 'good_id' => , 'good_count'),
+			array(),
+
+			);*/
+		foreach ($_SESSION['cart'] as $key => $value) {
+			$order_goods_params['keyvalue'][] = array('order_id' => $order_id, 'good_id' => $key, 'good_count' => $value['quantity']);
+		}
+		//var_dump($order_goods_params['keyvalue']);
+		echo "<br>";
+		$result = $this->insert_new_entry($order_goods_params);
+		var_dump($result); echo " Результат добавления товаров<br>";
+	}
+
+	protected function create_new_order($user, $goods, $status)
+	{
+
+	}
+/* это тут не нужно, это из шоп-модели
 	public function get_categories_list()
 	{
 		$query_params = array('table' => 'categories');
 		$query_params['columns'] = array('id', 'category_name');
 		$result = $this->read_any_table($query_params);
 		return $result;
-	}
+	}*/
 }

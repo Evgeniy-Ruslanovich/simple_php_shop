@@ -115,7 +115,7 @@ class Order_controller //extends Database_master
 				$this->template = 'shop_message.php';
 			}
 		} else {
-			echo "Не передан товар, что за фигня";//потом придумаю, куда переадресовать
+			echo "Не передан товар, что за фигня? Юзер, хватит баловаться!";//потом придумаю, куда переадресовать
 		}
 		/*
 		$this->output_data['message'] = 'просмотр корзины';
@@ -138,10 +138,12 @@ class Order_controller //extends Database_master
 			$i++;
 			$this->set_new_values_to_session_cart($value, $delete, $quantity);
 		}
-
+		header('Location: ./?ctrl=ordering&action=cart');
+		die();
+		/*
 		$this->output_data['message'] = 'Редактирование сессионной корзины';
 		$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a> | <a href="./">Перейти в магазин</a>';
-		$this->template = 'shop_message.php';
+		$this->template = 'shop_message.php';*/
 	}
 
 	public function get_output_data()
@@ -158,4 +160,16 @@ class Order_controller //extends Database_master
 			$_SESSION['cart'][(int)$good_id]['quantity'] = (int)$quantity;
 		}
 	}
+
+	protected function save_draft()
+	{
+		$this->output_data['message'] = 'Сохранение корзины в черновик заказа';
+		$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a> | <a href="./">Перейти в магазин</a>';
+		$this->template = 'shop_message.php';
+		require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
+		$order_data = new Orders_data();
+		$order_data->save_draft();
+
+	}
+
 }

@@ -134,11 +134,11 @@ class Security_pass extends Database_master
 		//header('Location: ./login.php');
 		//die();
 	}
-
+/*
 	public function register_new_user()
 	{
 		# code...
-	}
+	}*/
 
 	public function get_permissions($value='')
 	{
@@ -160,5 +160,10 @@ class Security_pass extends Database_master
 	public function get_role()
 	{
 		return $this->user_role;
+	}
+
+	public function get_user_id()
+	{
+		return $this->user_id;
 	}
 }

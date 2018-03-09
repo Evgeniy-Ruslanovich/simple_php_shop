@@ -25,7 +25,7 @@ echo '<p>Общая сумма: <b>' . $total_sum . '</b></p>';
 echo "<button>Сохранить изменения</button>";
 echo '</form>';
 
-echo '<br><br><form method="post" action="./?ctrl=ordering&ctrl=save_draft"><button>Перейти к оформлению заказа</button></form>';
+echo '<br><br><form method="post" action="./?ctrl=ordering&action=save_draft"><button>Перейти к оформлению заказа</button></form>';
 /*
 ?>
 <br><br>

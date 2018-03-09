@@ -99,6 +99,31 @@ class Database_master {
 		return $string;//тут надо потом дописать
 	}
 
+	protected /*public*/ function one_entry_values_array_to_string($one_entry_values_array){ //array_to_comma_separated_list_whith_quotes
+		global $link;
+		$new_array = array();
+		foreach ($one_entry_values_array as $value) {
+			$new_array[] = mysqli_real_escape_string($link, $value);
+		}
+		$string = implode('\', \'', $new_array);
+		$string = '\'' . $string . '\' ';
+				
+		return $string;//тут надо потом дописать
+	}
+
+	protected /*public*/ function few_entries_values_array_to_string($few_entries_values_array) //из массива разделенных запятой значений, в строку, где эти значения в скобках через запятую
+	{
+		$new_strings_array = array();
+		foreach ($few_entries_values_array as $one_entry_values_array) {
+			$new_strings_array[] = $this->one_entry_values_array_to_string($one_entry_values_array);
+		}
+		$string = implode('), (', $new_strings_array);
+		$string = '(' . $string . ')';
+		return $string;
+	}
+
+
+
 	/*Короче, предыдущей функции хватало ровно до того момента, как  не решил сделать джоин. тогда пришлось резко усложнять всю систему. Заново писать уже слишком долго, так что сделали вот такую заплатку. Вообще, мне кажется, идея с единым классом для базы слишком геморная, надо бует переходить пором на PDO или ORM. Но, я хотя бы попытаюсь))
 	*/
 	protected /*public*/ function columns_array_to_string_2($array){ //array_to_comma_separated_list_whith_backquotes
@@ -143,11 +168,44 @@ class Database_master {
 
 	protected function insert_new_entry($params)
 	{
-		# code...
+		//$query = "INSERT INTO `{$TABLE}` (column1, column2)";
+		global $link;
+		$query = $this->build_insert_query($params);
+		$result = mysqli_query($link, $query);
+		echo $query . '<br>';
+		
+		$error_list = mysqli_error_list ($link);
+		echo 'Список ошибок: '; var_dump($error_list);
+		echo '<br>';
+		return $result;
 	}
 
 	protected function build_insert_query($params)
 	{
-		# code...
+		//global $link;
+		/*params = array(
+		'table' => 'table',
+		'keyvalue' => array('column' => 'value', 'column' => 'value', 'column' => 'value',)
+		)*/
+		//Необходимо, чтобы порядок ключей во всех массивах с данными был одинаковый!!!
+		$query = 'INSERT INTO ' . DB_NAME;
+		$query = $query . '.`' . $params['table'] . '` ';
+		$columns = array();
+		$values = array();
+		foreach ($params['keyvalue'] as $value) {
+			$values[] = $value;
+		}
+		foreach ($params['keyvalue'][0] as $key => $value) { //берем для примера один первый массив, и достаем из него ключи. Во всех остальных массивах ключи должны быть точно такие же. Как тут сделать защиту от дурака??
+			$columns[] = $key;
+		}
+		$columns_string = $this->columns_array_to_string($columns);
+		$values_string = $this->few_entries_values_array_to_string($values);
+		$query .= '(' . $columns_string . ')' . ' VALUES ' . $values_string;
+		return $query;
+	}
+
+	protected function insert_few_entries($params)
+	{
+
 	}
 }
