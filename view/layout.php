@@ -39,9 +39,12 @@ global $security_pass;
 					echo '<a style="color: #ddd;" href="./?ctrl=admin">В админку</a> | ';
 				}
 				echo '<a style="color: #ddd;" href="./?ctrl=ordering&action=cart">Корзина</a> | ';
+				echo '<a style="color: #ddd;" href="./?ctrl=ordering&action=list">Мои заказы</a> | ';
+				echo '<a style="color: #ddd;" href="./?ctrl=user&action=list">Личный кабинет</a> | ';
 				echo '<a style="color: #ddd;" href="./?ctrl=user&action=logout">Выйти</a>';
 			} else {
-				echo '<a style="color: #ddd;" href="./?ctrl=user&action=login">Войти</a>';
+				echo '<a style="color: #ddd;" href="./?ctrl=user&action=login">Войти</a> | ';
+				echo '<a style="color: #ddd;" href="./?ctrl=user&action=register">Зарегистрироваться</a>';
 			}
 			?></p>
 			</div>

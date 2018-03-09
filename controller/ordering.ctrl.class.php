@@ -13,10 +13,11 @@ class Order_controller //extends Database_master
 		$function_names = array(
 			'cart' => 'view_cart',
 			'add_to_cart' => 'add_to_cart',
-			'delete-good' => 'delete_from_cart',
-			'edit-quantity' => 'edit_good_quantity',
-			'save-draft' => 'save_draft',
-			'push-order' => 'push_order',
+			'delete_good' => 'delete_from_cart',
+			'edit_cart' => 'edit_session_cart',
+			'edit_quantity' => 'edit_good_quantity',
+			'save_draft' => 'save_draft',
+			'push_order' => 'push_order',
 			'list' => 'view_user_orders_list');
 		$function = (isset($function_names[$action])) ? $function_names[$action] : $function_names['list'];
 		//echo $function_names[$subctrl];
@@ -93,7 +94,7 @@ class Order_controller //extends Database_master
 
 	protected function add_good_to_session_cart()
 	{
-		echo "вызвана функция добавления в сессионную корзину";
+		//echo "вызвана функция добавления в сессионную корзину";
 		if ( !isset($_SESSION['cart']) ) {
 			$_SESSION['cart'] = array();
 		}
@@ -122,8 +123,39 @@ class Order_controller //extends Database_master
 		$this->template = 'shop_message.php';*/
 	}
 
+	protected function edit_session_cart()
+	{
+		//var_dump($_POST); echo "<br>";
+		$i = 0;
+		foreach ($_POST['good_id'] as  $value) {
+			$delete = false;
+			if(isset($_POST['delete'])){
+				if (in_array($value, $_POST['delete'])) {
+					$delete = true;
+				}
+			}
+			$quantity = $_POST['quantity'][$i];
+			$i++;
+			$this->set_new_values_to_session_cart($value, $delete, $quantity);
+		}
+
+		$this->output_data['message'] = 'Редактирование сессионной корзины';
+		$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a> | <a href="./">Перейти в магазин</a>';
+		$this->template = 'shop_message.php';
+	}
+
 	public function get_output_data()
 	{
 		return $this->output_data;
+	}
+
+	protected function set_new_values_to_session_cart($good_id, $delete, $quantity)
+	{
+		//echo 'Устанавливаются новые значения для ' . $good_id . ' Удалить: ' . $delete . 'Количество: ' . $quantity . '<br>';
+		if ($delete) {
+			unset($_SESSION['cart'][(int)$good_id]);
+		} else {
+			$_SESSION['cart'][(int)$good_id]['quantity'] = (int)$quantity;
+		}
 	}
 }

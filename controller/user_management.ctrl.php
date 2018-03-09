@@ -57,7 +57,7 @@ if ($action === 'login') {
 	} else {
 		echo 'Не удалось войти. Неправильный логин или пароль<br>';
 	}
-	?>
+	?>ы
 <form method="post">
 	<label>Емейл<input type="text" name="user_email"></label>
 	<label>Пароль<input type="text" name="passw"></label>
