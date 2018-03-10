@@ -29,6 +29,7 @@ class Order_controller //extends Database_master
 		global $security_pass;	
 		if($security_pass->auth_status) {
 			$have_draft = false;//здесь должна быть проверка на наличие черновика
+			
 			if ($have_draft) {
 				$this->view_order_draft();
 			} else {
@@ -64,6 +65,9 @@ class Order_controller //extends Database_master
 	{
 		global $security_pass;	
 		if($security_pass->auth_status) {
+			require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
+			$order_data = new Orders_data();
+			$order_data->recount_order_summ(5);//Это временно, просто проверка
 			$this->output_data['message'] = 'просмотр списка заказов';
 			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=list">К списку заказов</a>';
 			$this->template = 'shop_message.php';
@@ -169,7 +173,6 @@ class Order_controller //extends Database_master
 		require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
 		$order_data = new Orders_data();
 		$order_data->save_draft();
-
 	}
 
 }

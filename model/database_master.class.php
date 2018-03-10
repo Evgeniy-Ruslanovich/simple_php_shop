@@ -10,7 +10,7 @@ class Database_master {
 
 	//protected $link;
 	//$link = mysqli_connect(SQL_HOST, DB_USER, DB_PASSW);
-	/*
+	/* параметры для чтени явыглядят примерно так:
 	$params = array(
 	//SELECT
 	'columns' => array(), //or *
@@ -62,17 +62,17 @@ class Database_master {
 		global $link;
 		$query = 'SELECT '; //пробелы ставятся ПОСЛЕ каждого элемента, а не до, не путаться
 		if (count($params['columns'])) {
+			$escaped_array = array();
 			foreach ($params['columns'] as $value) {
-				$value = mysqli_real_escape_string($link, $value);
+				$escaped_array[] = mysqli_real_escape_string($link, $value);//хз надо оно или нет
 			}
-			$query .= $this->columns_array_to_string_2($params['columns']);
+			$query .= $this->columns_array_to_string_2($escaped_array);
+			//$query .= $this->columns_array_to_string_2($params['columns']);
 		} else {
 			$query .= '* ';
 		}
-		$params['table'] = mysqli_real_escape_string($link, $params['table']);
+		$params['table'] = mysqli_real_escape_string($link, $params['table']);//тоже хз, надо оно или нет, мы же ЖОСКА даем таблицу, это не юзерь нам дает
 		$query .= 'FROM ' . DB_NAME . '.`' . $params['table'] . '` '; //DB_NAME не надо дополнительно обносить обратными кавычками, она изначально обкавычена уже в конфиге..
-		//$query .= generate_where_statement($params['where']);
-		//$query = mysql_real_escape_string($query);
 		if (isset($params['join'])) {
 			$query .= $params['join'] . ' '; //
 		}
@@ -81,11 +81,8 @@ class Database_master {
 		}
 		if (isset($params['order_by'])) {
 			$params['order_by'][0] = mysqli_real_escape_string($link, $params['order_by'][0]);
-			$query .= 'ORDER BY `' . $params['order_by'] . '` ';
-
+			$query .= 'ORDER BY `' . $params['order_by'] . '` '; //что за фигня, там же должен быть массив
 		}
-		
-
 		return $query;
 	}
 
@@ -101,17 +98,17 @@ class Database_master {
 
 	protected /*public*/ function one_entry_values_array_to_string($one_entry_values_array){ //array_to_comma_separated_list_whith_quotes
 		global $link;
-		$new_array = array();
+		$escaped_array = array();
 		foreach ($one_entry_values_array as $value) {
-			$new_array[] = mysqli_real_escape_string($link, $value);
+			$escaped_array[] = mysqli_real_escape_string($link, $value);
 		}
-		$string = implode('\', \'', $new_array);
+		$string = implode('\', \'', $escaped_array);
 		$string = '\'' . $string . '\' ';
 				
 		return $string;//тут надо потом дописать
 	}
 
-	protected /*public*/ function few_entries_values_array_to_string($few_entries_values_array) //из массива разделенных запятой значений, в строку, где эти значения в скобках через запятую
+	protected /*public*/ function few_entries_values_array_to_string($few_entries_values_array) //из массива разделенных запятой значений, в строку, где эти значения в скобках через запятую - VALUES ('1','2','3'),('1','2','3'),('1','2','3'). $few_entries_values_array - это массив массивов
 	{
 		$new_strings_array = array();
 		foreach ($few_entries_values_array as $one_entry_values_array) {
@@ -122,9 +119,7 @@ class Database_master {
 		return $string;
 	}
 
-
-
-	/*Короче, предыдущей функции хватало ровно до того момента, как  не решил сделать джоин. тогда пришлось резко усложнять всю систему. Заново писать уже слишком долго, так что сделали вот такую заплатку. Вообще, мне кажется, идея с единым классом для базы слишком геморная, надо бует переходить пором на PDO или ORM. Но, я хотя бы попытаюсь))
+	/*Короче, предыдущей функции columns_array_to_string() хватало ровно до того момента, как  не решил сделать джоин. тогда пришлось резко усложнять всю систему. Заново писать уже слишком долго, так что сделали вот такую заплатку. Вообще, мне кажется, идея с единым классом для базы слишком геморная, надо бует переходить потом на PDO или ORM. Но, я хотя бы попытаюсь))
 	*/
 	protected /*public*/ function columns_array_to_string_2($array){ //array_to_comma_separated_list_whith_backquotes
 		global $link;
@@ -138,7 +133,7 @@ class Database_master {
 					$as_statement = " AS '$column_string[2]'";
 				} else {
 					if (count($column_string) === 1) {
-						# code...
+						# code...ээ а чо делать то? Вот блин засада, когда через несклько дней приходишь, и не знаешь уже, что хотел. Ну, принципе, все работает, несмотря на то, что тут пустое место. Видимо, тут ничего делать не надо, и так хорошо.
 					}
 				}
 				$table_name = '';
@@ -168,7 +163,7 @@ class Database_master {
 
 	protected function insert_new_entry($params)
 	{
-		//$query = "INSERT INTO `{$TABLE}` (column1, column2)";
+		//$query = "INSERT INTO `{$TABLE}` (column1, column2, column3) VALUES ('1','2','3'),('1','2','3')";
 		global $link;
 		$query = $this->build_insert_query($params);
 		$result = mysqli_query($link, $query);
@@ -185,8 +180,12 @@ class Database_master {
 		//global $link;
 		/*params = array(
 		'table' => 'table',
-		'keyvalue' => array('column' => 'value', 'column' => 'value', 'column' => 'value',)
+		'keyvalue' => array(['column1' => 'value', 'column2' => 'value', 'column3' => 'value',],
+							['column1' => 'value', 'column2' => 'value', 'column3' => 'value',],
+							['column1' => 'value', 'column2' => 'value', 'column3' => 'value',]
+							)
 		)*/
+		//На выходе - INSERT INTO `table` (`column1`, `column2`, `column3`) VALUES ('1','2','3'),('1','2','3')
 		//Необходимо, чтобы порядок ключей во всех массивах с данными был одинаковый!!!
 		$query = 'INSERT INTO ' . DB_NAME;
 		$query = $query . '.`' . $params['table'] . '` ';

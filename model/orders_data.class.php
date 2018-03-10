@@ -45,7 +45,7 @@ class Orders_data extends Database_master
 
 
 
-	public function get_public_orders_list($orders_params) {
+	public function get_user_orders_list($orders_params) {
 		$query_params = array('table' => 'orders');
 		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
 		//$query_params['hidden'] = 0; //
@@ -117,6 +117,9 @@ class Orders_data extends Database_master
 				);
 			 //тут должен быть массив в массиве, потому что можно вносить новые записи по одной, а можно пачкой (как, например, товары в заказе), и если пачкой - то это массив массивов. А если по одной - то это опять же массив с одним элементом, тоже массивом.
 		$result = $this->insert_new_entry($order_params);
+		if (!$result) {
+			return false; //если чо не так, выходим на фиг
+		}
 		var_dump($result); echo " Результат создания нового заказа<br>";
 		$order_id = mysqli_insert_id($link); //вообще можно это в самом скуэль-запросе сделать https://dev.mysql.com/doc/refman/5.7/en/getting-unique-id.html
 		/*АЙДИ ТОВАРА СОХРАНЯЮТСЯ КАК КЛЮЧИ МАССИВА cart В СЕССИИ*/
@@ -133,11 +136,34 @@ class Orders_data extends Database_master
 		//var_dump($order_goods_params['keyvalue']);
 		echo "<br>";
 		$result = $this->insert_new_entry($order_goods_params);
+		if (!$result) {
+			return false; //если чо не так, выходим на фиг
+		}
 		var_dump($result); echo " Результат добавления товаров<br>";
+		$this->recount_order_summ($order_id);
+		unset($_SESSION['cart']);
+		$_SESSION['have_draft'] = true; //Запомним, что теперь у нас есть черновик, и в след. раз полезем туда вместо корзины. Не забыть переставить на ФОЛС, когда переправим заказ в обработку. Тогда можно снова начать набивать корзину.
 	}
 
 	protected function create_new_order($user, $goods, $status)
 	{
+
+	}
+
+	/*protected*/ public function recount_order_summ($order_id)
+	{
+		global $link;
+		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = '" . (int)$order_id . "'"; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
+		$result = mysqli_query($link, $query);
+		//var_dump(mysqli_error_list($link));
+		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
+		echo $total_amount;
+		//var_dump($result);
+		//var_dump($total_amount);
+		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`='" . (int)$order_id . "'"; //а хрен его знает, откуда этот одре_айди пришел, лучше перебдеть
+		$result = mysqli_query($link, $query);
+		var_dump(mysqli_error_list($link));
+		return (bool)$result;
 
 	}
 /* это тут не нужно, это из шоп-модели

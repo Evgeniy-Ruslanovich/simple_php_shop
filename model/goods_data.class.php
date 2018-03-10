@@ -93,12 +93,10 @@ class Goods_data extends Database_master
 		if (isset($goods_params['categories']) && count($goods_params['categories']))  {
 			//$where_statement .= ' AND ';
 			foreach ($goods_params['categories'] as $key => $categoriy) {
-				$where_statement .= 'OR `category`=\''. $categoriy .'\' OR `parent_category`=\''. $categoriy .'\'';
-				
+				$where_statement .= 'OR `category`=\''. $categoriy .'\' OR `parent_category`=\''. $categoriy .'\'';//пока что двухуровневая вложенность категорий				
 			}
-			$where_statement = substr($where_statement, 3);
-			$where_statement = 'AND (' . $where_statement . ')';
-		
+			$where_statement = substr($where_statement, 3); //обрезаем первый OR
+			$where_statement = 'AND (' . $where_statement . ')';	
 		}
 			$where_statement = 'WHERE `hidden`=\'0\' ' . $where_statement . '';
 		return $where_statement;
