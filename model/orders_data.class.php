@@ -19,33 +19,13 @@ class Orders_data extends Database_master
 		//HAVING
 		'group by' =>array(),
 		//ORDER BY
-		'order_by' =>''
-
-		$goods_params = array(  //ЭТО уже должно соответствовать конкретной таблице, в данном случае товаров.
-		//SELECT
-		'fields' => array(), //or * fields аналогично columns - Это задаем ЖОСКА
-		//FROM
-		'table' => 'goods', //Это тоже ЖОСКА
-		//WHERE
-		'categories' => array(),
-		'hidden' => 0 показывать открытые, 1, показать только скрытые, или ничего, тогда показывать всё //ЖОСКА
-		//group by
-		'group by' =>'', //НЕ НАДА
-		//HAVING
-		'group by' =>array(),
-		//ORDER BY
-		'order_by' =>'' //НАДА
-		//ПО сути нам для публичного списка товаров нада: категорию, и сортировать по..
-		То есть: */
-	/*
-	$goods_params = array(
-		'categories' => array(),
-		'order_by' =>'' //НАДА
+		'order_by' =>'');
 	*/
 
 
 
-	public function get_user_orders_list($orders_params) {
+	public function get_user_orders_list() {
+
 		$query_params = array('table' => 'orders');
 		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
 		//$query_params['hidden'] = 0; //
@@ -57,30 +37,33 @@ class Orders_data extends Database_master
 
 	}
 
-	public function get_public_single_order($order_id) {
-		$query_params = array('table' => 'orders');
-		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo', 'product_description');
-		$query_params['where'] = 'WHERE `id`=\'' . (int)$order_id . '\' ';
-		$result = $this->read_any_table($query_params)[0];
+	public function get_public_single_order($order_id)
+	{
+		global $security_pass;
+		$user_id = $security_pass->get_user_id();
+		$query = "SELECT `orders`.*,
+		`order_status`.`status_name_rus`, `order_goods`.`good_id`,`order_goods`.`good_count`,`goods`.`product_name`,`goods`.`price`, 
+		`order_goods`.`good_count`*`goods`.`price` AS 'good_sum'
+		FROM `orders` 
+		INNER JOIN `order_status` on `order_status`.`id` = `orders`.`order_status` 
+		INNER JOIN `order_goods` on `order_goods`.`order_id` = `orders`.`id` 
+		INNER JOIN `goods` ON `goods`.`id` = `order_goods`.`good_id` 
+		WHERE `orders`.`id` = " . (int)$order_id . " AND `orders`.`user_id` = " . $user_id;
+		//Мы задаем два условия, номер заказа и айди юзера. Таким образом, если юзер захочет посмотреть не свой заказ, просто вбив  в адресную строку номер заказа, то увидит кукиш. МОжно видеть только те заказы, которые соответствуют твоему айдишнику из $security_pass		
+		/*Это тот случай, когда запрос специфический, и блин проще просто дать текст запроса, чем бить на парамерты, потом оратно их конвертировать в запрос. МОжно было и разбить, но блин запарился.*/
+		$result = $this->read_any_table_ready_query($query);
 		return $result;
 	}
 	
-	public function get_admin_single_order($order_id) {
+	public function get_admin_single_order($order_id)
+	{
 		$query_params = array('table' => 'goods');
 		//$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo', 'product_description');
 		$query_params['where'] = 'WHERE `id`=\'' . (int)$good_id . '\' ';
 		$result = $this->read_any_table($query_params)[0];
 		return $result;
 	}
-	/* protected function build_where_statement($goods_params)
-	{
-		$where_statement = '';
-		if (isset($goods_params['hidden'] && $goods_params['categories'])) {
-			$where_statement .= 'WHERE ';
-
-		}
-	}*/
-
+	/*
 	protected function build_where_statement_for_public_goods_list($goods_params)
 	{//для публичного магазина нам нужно только знать категорию, потому что скрытые по умолчанию не показываются
 		//$where_statement = 'WHERE `hidden`=0';  //скрытые нам не нужны
@@ -97,8 +80,8 @@ class Orders_data extends Database_master
 		}
 			$where_statement = 'WHERE `hidden`=\'0\' ' . $where_statement . '';
 		return $where_statement;
-	}
-
+	}*/
+	/*Функция для сохранения из сессии в черновик*/
 	public function save_draft()
 	{
 		global $security_pass;
@@ -109,60 +92,53 @@ class Orders_data extends Database_master
 					array(
 					'user_id' => $security_pass->get_user_id(),
 					'order_status' => 1
-					)/*,
-					array(
-					'user_id' => $security_pass->get_user_id(),
-					'order_status' => 1
-					)*/
+					)
 				);
 			 //тут должен быть массив в массиве, потому что можно вносить новые записи по одной, а можно пачкой (как, например, товары в заказе), и если пачкой - то это массив массивов. А если по одной - то это опять же массив с одним элементом, тоже массивом.
 		$result = $this->insert_new_entry($order_params);
 		if (!$result) {
 			return false; //если чо не так, выходим на фиг
 		}
-		var_dump($result); echo " Результат создания нового заказа<br>";
 		$order_id = mysqli_insert_id($link); //вообще можно это в самом скуэль-запросе сделать https://dev.mysql.com/doc/refman/5.7/en/getting-unique-id.html
 		/*АЙДИ ТОВАРА СОХРАНЯЮТСЯ КАК КЛЮЧИ МАССИВА cart В СЕССИИ*/
-		echo $order_id . " -Последний айдишник<br>";
+		//echo $order_id . " -Последний айдишник<br>";
 		$order_goods_params = array('table' => 'order_goods');
-		$order_params['keyvalue'] = array();/*
-			array('order_id' => $order_id, = 'good_id' => , 'good_count'),
-			array(),
-
-			);*/
+		$order_goods_params['keyvalue'] = array();
 		foreach ($_SESSION['cart'] as $key => $value) {
 			$order_goods_params['keyvalue'][] = array('order_id' => $order_id, 'good_id' => $key, 'good_count' => $value['quantity']);
 		}
-		//var_dump($order_goods_params['keyvalue']);
-		echo "<br>";
 		$result = $this->insert_new_entry($order_goods_params);
 		if (!$result) {
 			return false; //если чо не так, выходим на фиг
 		}
-		var_dump($result); echo " Результат добавления товаров<br>";
-		$this->recount_order_summ($order_id);
+		//var_dump($result); echo " Результат добавления товаров<br>";
+		$result = $this->recount_order_summ($order_id);
+		if (!$result) {
+			return false; //если чо не так, выходим на фиг
+		}
 		unset($_SESSION['cart']);
 		$_SESSION['have_draft'] = true; //Запомним, что теперь у нас есть черновик, и в след. раз полезем туда вместо корзины. Не забыть переставить на ФОЛС, когда переправим заказ в обработку. Тогда можно снова начать набивать корзину.
+		return true;
 	}
 
 	protected function create_new_order($user, $goods, $status)
 	{
-
+		//это для админов.. или нет? как они это будут все делать? брр.. не понимаю пока
 	}
 
-	/*protected*/ public function recount_order_summ($order_id)
+	protected /*public*/ function recount_order_summ($order_id)
 	{
 		global $link;
 		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = '" . (int)$order_id . "'"; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
-		echo $total_amount;
+		//echo $total_amount;
 		//var_dump($result);
 		//var_dump($total_amount);
 		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`='" . (int)$order_id . "'"; //а хрен его знает, откуда этот одре_айди пришел, лучше перебдеть
 		$result = mysqli_query($link, $query);
-		var_dump(mysqli_error_list($link));
+		//var_dump(mysqli_error_list($link));
 		return (bool)$result;
 
 	}

@@ -6,3 +6,4 @@
 require_once 'config.php';
 
 $link = mysqli_connect(SQL_HOST, DB_USER, DB_PASSW);
+mysqli_query($link, "USE " . DB_NAME);

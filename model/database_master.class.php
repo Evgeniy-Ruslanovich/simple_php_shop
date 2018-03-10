@@ -57,6 +57,30 @@ class Database_master {
 		}
 	}
 
+	protected /*public*/ function read_any_table_ready_query($query)
+	{
+		global $link;
+		/*$query = $this->build_read_query($params);
+		//$query = mysqli_real_escape_string($link, $query);
+		//echo 'запрос ' . $query . '<br>';*/
+
+		$result = mysqli_query($link, $query);
+		var_dump(mysqli_error_list($link));
+		if(!$result) {echo "<br>FAIL!!!!!<br>LOOSER!!!<br>DATABASE QUERY ERROR<br>"; return;}
+		//var_dump($result);
+		if ($result->num_rows > 0) {			
+			//var_dump($result);		
+			$result_array = array();
+			while ($row = mysqli_fetch_assoc($result)) {
+			array_push($result_array, $row);
+			} 
+			return $result_array;
+		} else {
+			$result_array = array('empty_result');
+			return $result_array;
+		}
+	}
+
 	protected /*public*/ function build_read_query($params)
 	{
 		global $link;
