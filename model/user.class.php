@@ -2,7 +2,7 @@
 /*
 *
 */
-class Data_base_master {
+class User_data {
 
 	public $link;
 	public function read_any_table($params)

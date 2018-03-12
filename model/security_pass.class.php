@@ -17,7 +17,7 @@ class Security_pass extends Database_master
 	public  $user_name;
 	protected $user_role;
 	protected $user_permissions;
-	/*protected*/ public $auth_status = false;
+	protected $auth_status = false;
 	public $error = false;
 
 	public function chek_auth()
@@ -165,5 +165,10 @@ class Security_pass extends Database_master
 	public function get_user_id()
 	{
 		return $this->user_id;
+	}
+
+	public function get_auth_status()
+	{
+		return $this->auth_status;
 	}
 }

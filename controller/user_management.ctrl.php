@@ -4,23 +4,23 @@
 /*require_once(MODEL_DIR . '/security_pass.class.php');
 $security_pass = new Security_pass();
 $security_pass->chek_auth();*/
-$action = ($security_pass->auth_status) ? 'edit_user_data' : 'login' ;
+$action = ($security_pass->get_auth_status()) ? 'edit_user_data' : 'login' ;
 if(isset($_GET['action'])) {
 	switch ($_GET['action']) {
 		case 'login':
-			$action = ($security_pass->auth_status) ? 'edit_user_data' : 'login' ; //если он уже залогинен, то нафига логиниться
+			$action = ($security_pass->get_auth_status()) ? 'edit_user_data' : 'login' ; //если он уже залогинен, то нафига логиниться
 			break;
 		case 'logout':
-			$action = ($security_pass->auth_status) ? 'logout' : 'login' ; //если он уже залогинен, то может разлогиниться. А если не залогинен, то пусть логинится
+			$action = ($security_pass->get_auth_status()) ? 'logout' : 'login' ; //если он уже залогинен, то может разлогиниться. А если не залогинен, то пусть логинится
 			break;
 		case 'edit_user_data':
-			$action = ($security_pass->auth_status) ? 'edit_user_data' : 'login' ;
+			$action = ($security_pass->get_auth_status()) ? 'edit_user_data' : 'login' ;
 			break;
 		case 'register':
-			$action = ($security_pass->auth_status) ? 'edit_user_data' : 'register' ;
+			$action = ($security_pass->get_auth_status()) ? 'edit_user_data' : 'register' ;
 			break;
 		default:
-			$action = ($security_pass->auth_status) ? 'edit_user_data' : 'login' ;
+			$action = ($security_pass->get_auth_status()) ? 'edit_user_data' : 'login' ;
 			break;
 	}
 }

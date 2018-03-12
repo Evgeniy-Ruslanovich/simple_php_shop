@@ -1,7 +1,7 @@
 <?php
 /*Задача этого файлика - выбрать нужный экшн для админа*/
 $action = 'default';
-if (!$security_pass->auth_status) {
+if (!$security_pass->get_auth_status()) {
 	$subctrl = 'access_denied';
 	$action = 'not_logged_in';
 } else {

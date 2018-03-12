@@ -33,7 +33,7 @@ global $security_pass;
 				<a href="./"><h1>Магазин</h1></a>
 			
 			<p style="color: white;"><?php
-			if ($security_pass->auth_status) {
+			if ($security_pass->get_auth_status()) {
 				echo 'Привет, ' . $security_pass->user_name . ' | ';
 				if ($security_pass->get_role() != 1) {
 					echo '<a style="color: #ddd;" href="./?ctrl=admin">В админку</a> | ';
