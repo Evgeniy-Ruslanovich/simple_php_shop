@@ -136,17 +136,35 @@ class Orders_data extends Database_master
 		//это для админов.. или нет? как они это будут все делать? брр.. не понимаю пока
 	}
 
+	protected /*public*/ function get_draft_id_subquery()
+	{
+		global $security_pass;
+		$user_id = $security_pass->get_user_id();
+		$subquery = "(SELECT `id` FROM `orders` WHERE `user_id`=" . $user_id . " AND `order_status`=1 LIMIT 1)";
+		return $subquery;
+	}
+
 	protected /*public*/ function recount_order_summ($order_id)
 	{
 		global $link;
-		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = '" . (int)$order_id . "'"; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
+		if ($order_id === 'draft') {
+			$subquery = $this->get_draft_id_subquery();
+			//К сожалению, MySQL не даем мне так схитрить и использовать в этом месте подзапрос вместо айди. Мол обратиться в подзапросе к той же таблице, которую я хочу апдейтить.. А такая задумка была веселая. Ну будем костылять, получать айди запросом.
+			$order_id = mysqli_fetch_assoc( mysqli_query($link, $subquery))['id'];
+
+		} else {
+			$order_id = (int)$order_id;
+		}
+		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = " . $order_id; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
+		//echo 'запрос на пересчет:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
 		//echo $total_amount;
 		//var_dump($result);
 		//var_dump($total_amount);
-		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`='" . (int)$order_id . "'"; //а хрен его знает, откуда этот одре_айди пришел, лучше перебдеть
+		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`=" . $order_id;
+		//echo 'запрос на апдейт суммы:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		return (bool)$result;
@@ -157,7 +175,7 @@ class Orders_data extends Database_master
 		$user_id = $security_pass->get_user_id();
 		$query = "SELECT COUNT(*) AS 'drafts' FROM `orders` WHERE `user_id`=" . $user_id . " AND `order_status` ='1'";
 		$result = $this->read_any_table_ready_query($query);
-		return (bool)$result[0]['drafts'];
+		return (bool)$result[0]['drafts'];//ващет, если драфтов больше одного, то это не есть нормально. И в дальнейшем бы обращаемся к какому-то одному, который нам выдаст база, а выдаст она нам, при отсутствии других условий, более ранний, так как сортировать будет по айдишнику. А лучше бы более поздний. Поэтому надо в субкуюери добавить ордербай по времени по убиванию, тогда самый первый будет самый поздний
 	}
 
 	public function get_payment_methods_data()
@@ -178,6 +196,46 @@ class Orders_data extends Database_master
 			);
 		$result = $this->read_any_table($query_params);
 		return $result;
+	}
+
+	public function edit_draft()
+	{
+		//var_dump($_POST);
+		//echo "<br> ПОСТ ГУУУУДС: ";
+		//var_dump($_POST['goods']);
+		$order_id_subquery = $this->get_draft_id_subquery();
+		echo 'order_id_subquery: ' . $order_id_subquery . '<br>';
+		$goods_to_delete = array();
+		$goods_to_update_keyvalue = array();
+		if (isset($_POST['goods']['delete'])) {
+			//echo " || Ёу, есть удаление в ПОСТ || ";
+			foreach ($_POST['goods']['delete'] as $value) {
+				$goods_to_delete[] = $value;
+				//echo " || Ёу, мы удаляем товар || ";
+			}
+		}
+		if (isset($_POST['goods']['good_id'])) {
+			foreach ($_POST['goods']['good_id'] as $key => $value) {
+				if ( in_array($value, $goods_to_delete) ) {
+					continue;
+				} else {
+					$goods_to_update_keyvalue[] = array('good_id' => (int)$value, 'good_count' => $_POST['goods']['good_count'][$key] );
+					/*Дело в том,  что айдишники и количество товаров идут параллельно в нумерованных массивах, поэтому если мы хотим узнать, какое количество присвоить товару, мы должны взять айди из одного массива, и количество из соседнего массива под тем же ключом (там нумерованные массивы, автоматически создающиеся из ПОСТ*/
+				}
+			}
+		}
+		foreach ($goods_to_delete as $value) {
+			$params = array('table' => 'order_goods', 
+				'where' => " WHERE `order_id`=" . $order_id_subquery . " AND `good_id`=" . $value);
+			$this->delete_entry($params);
+			//var_dump(mysqli_error_list($link));
+		}
+		
+		$this->update_any_entry($goods_to_update_keyvalue);
+		echo 'Товары на удаление: '; var_dump($goods_to_delete);
+		echo '<br>Товары на апдейт: '; var_dump($goods_to_update_keyvalue);
+		echo '<br>';
+		$this->recount_order_summ('draft');
 	}
 	/*
 	public function get_users_order_draft()

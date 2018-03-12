@@ -27,7 +27,8 @@ class Order_controller //extends Database_master
 			'push_order' => 'push_order',
 			'list' => 'view_user_orders_list',
 			'order' => 'view_user_single_order',
-			'edit_draft_detail' => 'edit_draft_detail');
+			'edit_draft_detail' => 'edit_draft_detail',
+			'edit_draft' => 'edit_draft');
 		$function = (isset($function_names[$action])) ? $function_names[$action] : $function_names['list'];
 		//echo $function_names[$subctrl];
 		$this->$function();
@@ -160,6 +161,7 @@ INSERT INTO `order_goods`(`order_id`, `good_id`, `good_count`) VALUES ((SELECT `
 #1062 - Дублирующаяся запись '2-11' по ключу 'PRIMARY'
 
 			*/
+		
 		}
 		/*Пользователь добавляет товары из магазина. Потом, когда он просматривает корзину, то может изменить количество товара, потому что по умолчанию добавляется одна штука. Либо изменить количество. Со странички редактирования приходит ПОСТ в котором айди товара, количество, и метка "удалить", из чекбокса*/
 
@@ -177,6 +179,22 @@ INSERT INTO `order_goods`(`order_id`, `good_id`, `good_count`) VALUES ((SELECT `
 			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
 			$this->template = 'shop_message.php';
 			var_dump($_POST);
+		}
+
+		protected function edit_draft()
+		{
+			if(isset($_POST['edit_draft_hidden'])) {
+				echo "Вызвана ветка редактирования черновика";
+				require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
+				$order_data = new Orders_data();
+				$order_data->edit_draft();	
+			} else {
+				$this->view_cart();
+			}
+			/*$this->output_data['message'] = 'edit_draft_goods';
+			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
+			$this->template = 'shop_message.php';
+			var_dump($_POST);*/
 		}
 
 		protected function edit_session_cart()

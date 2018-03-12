@@ -65,7 +65,7 @@ class Database_master {
 		//echo 'запрос ' . $query . '<br>';*/
 
 		$result = mysqli_query($link, $query);
-		var_dump(mysqli_error_list($link));
+		//var_dump(mysqli_error_list($link));
 		if(!$result) {echo "<br>FAIL!!!!!<br>LOOSER!!!<br>DATABASE QUERY ERROR<br>"; return;}
 		//var_dump($result);
 		if ($result->num_rows > 0) {			
@@ -182,7 +182,37 @@ class Database_master {
 	}
 	protected function update_any_entry($params)
 	{
-		# code...
+		/*params table, array column=>value, Where*/
+		//Функция вообще построена неправильно, потому что отдельно вере, отдельно кейвалюе
+		global $link;
+		echo "Вардамп апдейт парамс: "; var_dump($params[0]) ;
+		echo '<br>';
+		$query = "UPDATE `" . $params['table'] . "` SET ";
+		$keyvalue = '';
+		foreach ($params['keyvalue'] as $key => $value) {
+			$keyvalue .= "`" . $key . "`='" . $value . "' ";
+		}
+		$query .= $keyvalue . $params['where'];
+		echo "Апдейт запрос: " . $query . '<br>';
+		/*$result = mysqli_query($link,$query);
+		echo 'Список ошибок при апдейте: '; var_dump($error_list);
+		echo '<br>';*/
+	}
+
+	protected function delete_entry($params)
+	{
+		global $link;
+		if(isset($params['ready_query'])) {
+			$query = $params['ready_query'];
+		} else {
+			$query = "DELETE FROM `" . $params['table'] . "` " . $params['where'];	
+		}
+		echo 'Запрос на удаление: ' . $query;
+		echo '<br>';
+		$result = mysqli_query($link, $query);
+		/*
+		echo 'Список ошибок при удалении: '; var_dump($error_list);
+		echo '<br>';*/
 	}
 
 	protected function insert_new_entry($params)
