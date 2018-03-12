@@ -27,9 +27,13 @@ class Orders_data extends Database_master
 	public function get_user_orders_list() {
 
 		$query_params = array('table' => 'orders');
-		$query_params['columns'] = array('id', 'product_name', 'category', 'price', 'good_main_photo');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
+		$query_params['columns'] = array('orders.id', 'order_time', 'total_amount', 'paid', 'order_status.status_name_rus');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
 		//$query_params['hidden'] = 0; //
-		$query_params['where'] = $this->build_where_statement_for_public_goods_list($orders_params);
+		global $security_pass;
+		$user_id = $security_pass->get_user_id();
+		//$query_params['where'] = $this->build_where_statement_for_public_goods_list($orders_params);
+		$query_params['where'] = "WHERE `orders`.`user_id`=" . $user_id;
+		$query_params['join'] = "INNER JOIN `order_status` ON `orders`.`order_status` = `order_status`.`id`";
 		//$query_params['order_by'] = null;
 		$result = $this->read_any_table($query_params);
 
@@ -47,8 +51,14 @@ class Orders_data extends Database_master
 		FROM `orders` 
 		INNER JOIN `order_status` on `order_status`.`id` = `orders`.`order_status` 
 		INNER JOIN `order_goods` on `order_goods`.`order_id` = `orders`.`id` 
-		INNER JOIN `goods` ON `goods`.`id` = `order_goods`.`good_id` 
-		WHERE `orders`.`id` = " . (int)$order_id . " AND `orders`.`user_id` = " . $user_id;
+		INNER JOIN `goods` ON `goods`.`id` = `order_goods`.`good_id` ";
+		if($order_id === 'draft'){
+			$where_statement = "WHERE `orders`.`order_status`=1 AND `orders`.`user_id` = " . $user_id; //ну там, вдруг будет более одного черновика, берем первый попавшийся. Хотя не должно быть больше одного
+		} else {
+			$where_statement = "WHERE `orders`.`id` = " . (int)$order_id . " AND `orders`.`user_id` = " . $user_id;
+		}
+		$query .= $where_statement;
+
 		//Мы задаем два условия, номер заказа и айди юзера. Таким образом, если юзер захочет посмотреть не свой заказ, просто вбив  в адресную строку номер заказа, то увидит кукиш. МОжно видеть только те заказы, которые соответствуют твоему айдишнику из $security_pass		
 		/*Это тот случай, когда запрос специфический, и блин проще просто дать текст запроса, чем бить на парамерты, потом оратно их конвертировать в запрос. МОжно было и разбить, но блин запарился.*/
 		$result = $this->read_any_table_ready_query($query);
@@ -140,8 +150,42 @@ class Orders_data extends Database_master
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		return (bool)$result;
-
 	}
+
+	public function check_draft(){
+		global $security_pass;
+		$user_id = $security_pass->get_user_id();
+		$query = "SELECT COUNT(*) AS 'drafts' FROM `orders` WHERE `user_id`=" . $user_id . " AND `order_status` ='1'";
+		$result = $this->read_any_table_ready_query($query);
+		return (bool)$result[0]['drafts'];
+	}
+
+	public function get_payment_methods_data()
+	{
+		$query_params = array(
+			'table' => 'payment_methods',
+			'columns' => array('id AS payment_id', 'method_name_rus AS payment_name')
+			);
+		$result = $this->read_any_table($query_params);
+		return $result;
+	}
+
+	public function get_delivery_methods_data()
+	{
+		$query_params = array(
+			'table' => 'delivery_methods',
+			'columns' => array('id AS delivery_id', 'method_name_rus AS delivery_name')
+			);
+		$result = $this->read_any_table($query_params);
+		return $result;
+	}
+	/*
+	public function get_users_order_draft()
+	{
+		global $security_pass;
+		$user_id = $security_pass->get_user_id();
+		$query_params = array();
+	}*/
 /* это тут не нужно, это из шоп-модели
 	public function get_categories_list()
 	{

@@ -11,13 +11,13 @@ if (isset($show_categories) && $show_categories) {
 $total_sum = 0;
 echo '<form method="post" action="./?ctrl=ordering&action=edit_cart">';
 foreach ($cart as $key => $value) {
-	$sum = (int)$value['quantity'] * (float)$value['price'];
+	$sum = (int)$value['good_count'] * (float)$value['price'];
 	$total_sum += $sum;
 	?>
 	<p><b><?= $value['product_name'] ?></b></p>
-	<p>Количество: <?= $value['quantity'] ?> Цена: <?= $value['price'] ?> Сумма: <?= $sum ?></p>
+	<p>Количество: <?= $value['good_count'] ?> Цена: <?= $value['price'] ?> Сумма: <?= $sum ?></p>
 	<p><label>Удалить товар<input type="checkbox" name="delete[]" value="<?= $value['good_id'] ?>"></label> | 
-	<label>Изменить количество <input type="number" name="quantity[]" value="<?= $value['quantity'] ?>"></label></p><br>
+	<label>Изменить количество <input type="number" name="good_count[]" value="<?= $value['good_count'] ?>"></label></p><br>
 	<input type="hidden" name="good_id[]" value="<?= $value['good_id'] ?>">
 	<?php
 }
