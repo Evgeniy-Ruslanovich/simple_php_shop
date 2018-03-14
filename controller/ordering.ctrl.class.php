@@ -184,7 +184,7 @@ INSERT INTO `order_goods`(`order_id`, `good_id`, `good_count`) VALUES ((SELECT `
 		protected function edit_draft()
 		{
 			if(isset($_POST['edit_draft_hidden'])) {
-				echo "Вызвана ветка редактирования черновика";
+				//echo "Вызвана ветка редактирования черновика";
 				require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
 				$order_data = new Orders_data();
 				$order_data->edit_draft();	

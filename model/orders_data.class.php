@@ -204,9 +204,9 @@ class Orders_data extends Database_master
 		//echo "<br> ПОСТ ГУУУУДС: ";
 		//var_dump($_POST['goods']);
 		$order_id_subquery = $this->get_draft_id_subquery();
-		echo 'order_id_subquery: ' . $order_id_subquery . '<br>';
+		//echo 'order_id_subquery: ' . $order_id_subquery . '<br>';
 		$goods_to_delete = array();
-		$goods_to_update_keyvalue = array();
+		$goods_to_update = array();
 		if (isset($_POST['goods']['delete'])) {
 			//echo " || Ёу, есть удаление в ПОСТ || ";
 			foreach ($_POST['goods']['delete'] as $value) {
@@ -219,23 +219,51 @@ class Orders_data extends Database_master
 				if ( in_array($value, $goods_to_delete) ) {
 					continue;
 				} else {
-					$goods_to_update_keyvalue[] = array('good_id' => (int)$value, 'good_count' => $_POST['goods']['good_count'][$key] );
+					$goods_to_update[] = array(
+							'table' => 'order_goods',
+							'keyvalue' => array(
+								'good_count' => $_POST['goods']['good_count'][$key]
+								),
+							'where' => " WHERE `order_id`=" . $order_id_subquery . " AND `good_id`=" . (int)$value 
+							);
 					/*Дело в том,  что айдишники и количество товаров идут параллельно в нумерованных массивах, поэтому если мы хотим узнать, какое количество присвоить товару, мы должны взять айди из одного массива, и количество из соседнего массива под тем же ключом (там нумерованные массивы, автоматически создающиеся из ПОСТ*/
+					/*Потом уж я подумал, что можно это по другому сделать, и давать массив goods[good_id] со значением делит, и каунт.*/
 				}
 			}
 		}
 		foreach ($goods_to_delete as $value) {
 			$params = array('table' => 'order_goods', 
-				'where' => " WHERE `order_id`=" . $order_id_subquery . " AND `good_id`=" . $value);
+				'where' => " WHERE `order_id`=" . $order_id_subquery . " AND `good_id`=" . (int)$value);
 			$this->delete_entry($params);
 			//var_dump(mysqli_error_list($link));
 		}
-		
-		$this->update_any_entry($goods_to_update_keyvalue);
-		echo 'Товары на удаление: '; var_dump($goods_to_delete);
-		echo '<br>Товары на апдейт: '; var_dump($goods_to_update_keyvalue);
-		echo '<br>';
+		foreach ($goods_to_update as $single_update_params) {
+			$this->update_any_entry($single_update_params);
+		}
+
+		$order_details_params = array('table' => 'orders');
+		$delivery_method = (int)$_POST['delivery_id'];
+		$payment_method = (int)$_POST['payment_id'];
+		global $link;
+		$users_comment = mysqli_real_escape_string($link, $_POST['users_comment']);
+		$delivery_address = mysqli_real_escape_string($link, $_POST['delivery_address']);
+		$order_details_params['keyvalue'] = array(
+			'delivery_method' => $delivery_method,
+			'payment_method' => $payment_method,
+			'users_comment' => $users_comment,
+			'delivery_address' => $delivery_address
+			);
+		$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];//пришлось таки запрашивать отдельным 
+		$order_details_params['where'] = "WHERE `id`=" . $order_id;
+
+		$this->update_any_entry($order_details_params);
+
+		//$this->update_any_entry($goods_to_update_keyvalue);
+		//echo 'Товары на удаление: '; var_dump($goods_to_delete);
+		//echo '<br>Товары на апдейт: '; var_dump($goods_to_update);
+		//echo '<br>';
 		$this->recount_order_summ('draft');
+		header('Location: ./?ctrl=ordering&action=cart');
 	}
 	/*
 	public function get_users_order_draft()

@@ -182,21 +182,25 @@ class Database_master {
 	}
 	protected function update_any_entry($params)
 	{
+		//echo 'парамс для апдейта: ';
+
 		/*params table, array column=>value, Where*/
 		//Функция вообще построена неправильно, потому что отдельно вере, отдельно кейвалюе
 		global $link;
-		echo "Вардамп апдейт парамс: "; var_dump($params[0]) ;
-		echo '<br>';
+		//echo "Вардамп апдейт парамс: "; var_dump($params['keyvalue']) ;
+		//echo '<br>';
 		$query = "UPDATE `" . $params['table'] . "` SET ";
 		$keyvalue = '';
 		foreach ($params['keyvalue'] as $key => $value) {
-			$keyvalue .= "`" . $key . "`='" . $value . "' ";
+			$keyvalue .= ", `" . $key . "`='" . $value . "' ";
 		}
+		$keyvalue = substr($keyvalue, 2);
 		$query .= $keyvalue . $params['where'];
-		echo "Апдейт запрос: " . $query . '<br>';
-		/*$result = mysqli_query($link,$query);
-		echo 'Список ошибок при апдейте: '; var_dump($error_list);
-		echo '<br>';*/
+		//echo "Апдейт запрос: " . $query . '<br>';
+		$result = mysqli_query($link,$query);
+		$error_list = mysqli_error_list($link);
+		//echo '<b>Список ошибок при апдейте:</b> '; var_dump($error_list);
+		//echo '<br>';
 	}
 
 	protected function delete_entry($params)
