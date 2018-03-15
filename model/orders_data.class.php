@@ -155,7 +155,7 @@ class Orders_data extends Database_master
 			$order_id = (int)$order_id;
 		}
 		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = " . $order_id; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
-		echo 'запрос на пересчет:' . $query . '<br>';
+		//echo 'запрос на пересчет:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
@@ -199,6 +199,7 @@ class Orders_data extends Database_master
 
 	public function edit_draft($push_order = false)
 	{
+		global $link;
 		//var_dump($_POST);
 		//echo "<br> ПОСТ ГУУУУДС: ";
 		//var_dump($_POST['goods']);
@@ -239,11 +240,11 @@ class Orders_data extends Database_master
 		foreach ($goods_to_update as $single_update_params) {
 			$this->update_any_entry($single_update_params);
 		}
-
+		$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];//нужно получить айди до того, как мы перепортачим заказ. ЭТО ВАЖНО. Потому что заказ отправлялся нормально, но сумма не пересчитывалась. ПОтому что сумма пересчитывалась по айдишнику заказа, а айдишник по подзапросу, а в подзапросе ищем статус "черновик", а статус мы, сука, поменяли, оттого при отрпавлении заказа сумма не пересчитывалась. Поэтому на фиг вся история с передачей draft в качестве аргумента, оказалась, в итоге бесполеной.
 		$order_details_params = array('table' => 'orders');
 		$delivery_method = (int)$_POST['delivery_id'];
 		$payment_method = (int)$_POST['payment_id'];
-		global $link;
+		//global $link;
 		$users_comment = mysqli_real_escape_string($link, $_POST['users_comment']);
 		$delivery_address = mysqli_real_escape_string($link, $_POST['delivery_address']);
 		$order_details_params['keyvalue'] = array(
@@ -255,7 +256,7 @@ class Orders_data extends Database_master
 		if($push_order) {
 			$order_details_params['keyvalue']['order_status'] = 2;
 		}
-		$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];//пришлось таки запрашивать отдельным 
+		//$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];//пришлось таки запрашивать отдельным 
 		$order_details_params['where'] = "WHERE `id`=" . $order_id;
 
 		$this->update_any_entry($order_details_params);
@@ -264,7 +265,7 @@ class Orders_data extends Database_master
 		//echo 'Товары на удаление: '; var_dump($goods_to_delete);
 		//echo '<br>Товары на апдейт: '; var_dump($goods_to_update);
 		//echo '<br>';
-		$this->recount_order_summ('draft');
+		$this->recount_order_summ($order_id);
 		if(!$push_order){
 		header('Location: ./?ctrl=ordering&action=cart');
 		}
