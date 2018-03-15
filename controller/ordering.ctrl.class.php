@@ -211,16 +211,21 @@ class Order_controller //extends Database_master
 		{
 			if(isset($_POST['edit_draft_hidden'])) {
 				//echo "Вызвана ветка редактирования черновика";
+				$push_order = false;//Это оначает перевод заказа из состояния черновика в активный заказ в статусе "ждет подтверждения"
+				if(isset($_POST['push_order'])){
+					$push_order = true;
+					$_SESSION['have_draft'] = false;
+				}
 				require_once MODEL_DIR . DIRECTORY_SEPARATOR . 'orders_data.class.php';
 				$order_data = new Orders_data();
-				$order_data->edit_draft();	
+				$order_data->edit_draft($push_order);
 			} else {
 				$this->view_cart();
 			}
-			/*$this->output_data['message'] = 'edit_draft_goods';
-			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
+			$this->output_data['message'] = 'Заказ передан в магазин';
+			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=list">Просмотреть мои заказы</a>';
 			$this->template = 'shop_message.php';
-			var_dump($_POST);*/
+			//var_dump($_POST);
 		}
 
 		protected function edit_session_cart()
@@ -272,6 +277,7 @@ class Order_controller //extends Database_master
 				$this->output_data['orders_list_array'] = $order_data->get_user_orders_list();
 				if ($this->output_data['orders_list_array'][0] === 'empty_result') {
 					$this->output_data['message'] = 'Заказов не обнаружено';
+					$this->output_data['suggested_link'] = '<a href="./">На главную</a>';
 					$this->template = 'shop_message.php';
 				} else {
 					$this->template = 'orders_list_tpl.php';

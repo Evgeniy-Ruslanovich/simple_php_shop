@@ -114,7 +114,7 @@ class Orders_data extends Database_master
 		$order_goods_params = array('table' => 'order_goods');
 		$order_goods_params['keyvalue'] = array();
 		foreach ($_SESSION['cart'] as $key => $value) {
-			$order_goods_params['keyvalue'][] = array('order_id' => $order_id, 'good_id' => $key, 'good_count' => $value['quantity']);
+			$order_goods_params['keyvalue'][] = array('order_id' => $order_id, 'good_id' => $key, 'good_count' => $value['good_count']);
 		}
 		$result = $this->insert_new_entry($order_goods_params);
 		if (!$result) {
@@ -155,7 +155,7 @@ class Orders_data extends Database_master
 			$order_id = (int)$order_id;
 		}
 		$query = "SELECT SUM(" . DB_NAME . ".`order_goods`.`good_count` * " . DB_NAME . ".`goods`.`price`) as 'total_amount' FROM " . DB_NAME . ".`order_goods` INNER JOIN " . DB_NAME . ".`goods` ON `goods`.`id`= `order_goods`.`good_id` WHERE `order_goods`.`order_id` = " . $order_id; //запарился указывать DB_NAME с другой стороны, если у нас будут разные базы, то легко будет вставить нужные константы..
-		//echo 'запрос на пересчет:' . $query . '<br>';
+		echo 'запрос на пересчет:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
@@ -197,7 +197,7 @@ class Orders_data extends Database_master
 		return $result;
 	}
 
-	public function edit_draft()
+	public function edit_draft($push_order = false)
 	{
 		//var_dump($_POST);
 		//echo "<br> ПОСТ ГУУУУДС: ";
@@ -252,6 +252,9 @@ class Orders_data extends Database_master
 			'users_comment' => $users_comment,
 			'delivery_address' => $delivery_address
 			);
+		if($push_order) {
+			$order_details_params['keyvalue']['order_status'] = 2;
+		}
 		$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];//пришлось таки запрашивать отдельным 
 		$order_details_params['where'] = "WHERE `id`=" . $order_id;
 
@@ -262,7 +265,9 @@ class Orders_data extends Database_master
 		//echo '<br>Товары на апдейт: '; var_dump($goods_to_update);
 		//echo '<br>';
 		$this->recount_order_summ('draft');
+		if(!$push_order){
 		header('Location: ./?ctrl=ordering&action=cart');
+		}
 	}
 	/*
 	public function get_users_order_draft()
