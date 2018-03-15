@@ -24,15 +24,19 @@ if ($single_order_data[0]['order_status'] === '2') {
 <form action="./?ctrl=ordering&action=edit_draft" method="post">
 	<input type="hidden" name="edit_draft_hidden" value="1">
 	<?php
-		foreach ($single_order_data as $key => $value) {
-			?>
-			<p><a href="./?ctrl=shop&good=<?= $value['good_id'] ?>"><b><?= $value['product_name'] ?></b></a></p>
-			<p>Количество: <?= $value['good_count'] ?> Цена: <?= $value['price'] ?> Сумма: <?= $value['good_sum'] ?></p>
-			<p><label>Удалить товар<input type="checkbox" name="goods[delete][]" value="<?= $value['good_id'] ?>"></label> | 
-			<label>Изменить количество <input type="number" name="goods[good_count][]" value="<?= $value['good_count'] ?>"></label></p><br>
-			<input type="hidden" name="goods[good_id][]" value="<?= $value['good_id'] ?>">
-			<br>
-			<?php
+		if ($single_order_data[0]['good_id'] === NULL) {
+			echo "<p>Этот заказ пустой. В заказе товаров не обнаружено.</p><br>";
+		} else {
+			foreach ($single_order_data as $key => $value) {
+				?>
+				<p><a href="./?ctrl=shop&good=<?= $value['good_id'] ?>"><b><?= $value['product_name'] ?></b></a></p>
+				<p>Количество: <?= $value['good_count'] ?> Цена: <?= $value['price'] ?> Сумма: <?= $value['good_sum'] ?></p>
+				<p><label>Удалить товар<input type="checkbox" name="goods[delete][]" value="<?= $value['good_id'] ?>"></label> | 
+				<label>Изменить количество <input type="number" name="goods[good_count][]" value="<?= $value['good_count'] ?>"></label></p><br>
+				<input type="hidden" name="goods[good_id][]" value="<?= $value['good_id'] ?>">
+				<br>
+				<?php
+			}
 		}
 	?>
 	<!--<button>Сохранить изменения</button><br><br>-->

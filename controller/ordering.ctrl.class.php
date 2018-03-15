@@ -42,6 +42,7 @@ class Order_controller //extends Database_master
 			global $security_pass;	
 			if($security_pass->get_auth_status()) {
 				$have_draft = $this->check_draft();//здесь должна быть проверка на наличие черновика
+				//echo 'Наличие черновика:' . $have_draft . '<br>';
 				if ($have_draft) {
 					$this->view_order_draft();
 				} else {

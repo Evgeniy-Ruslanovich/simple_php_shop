@@ -3,7 +3,7 @@
 /**
  * 
  */
-var_dump($orders_list_array);
+//var_dump($orders_list_array);
 /*
 ?>
 <h3>Заказ <b>№<?= $single_order_data[0]['id'] ?></b></h3>

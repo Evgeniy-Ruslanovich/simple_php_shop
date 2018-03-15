@@ -44,20 +44,28 @@ class Orders_data extends Database_master
 	{
 		global $security_pass;
 		$user_id = $security_pass->get_user_id();
-		$query = "SELECT `orders`.*,
-		`order_status`.`status_name_rus`, `order_goods`.`good_id`,`order_goods`.`good_count`,`goods`.`product_name`,`goods`.`price`, 
+		$query = "SELECT `orders`.*, 
+		`delivery_methods`.`method_name_rus` AS 'delivery_name', 
+		`payment_methods`.`method_name_rus` AS 'payment_name',
+		`order_status`.`status_name_rus`, 
+		`order_goods`.`good_id`,`order_goods`.`good_count`,
+		`goods`.`product_name`,`goods`.`price`, 
 		`order_goods`.`good_count`*`goods`.`price` AS 'good_sum'
 		FROM `orders` 
-		INNER JOIN `order_status` on `order_status`.`id` = `orders`.`order_status` 
-		INNER JOIN `order_goods` on `order_goods`.`order_id` = `orders`.`id` 
-		INNER JOIN `goods` ON `goods`.`id` = `order_goods`.`good_id` ";
+		LEFT JOIN `order_goods` on `order_goods`.`order_id` = `orders`.`id`
+		LEFT JOIN `goods` ON `goods`.`id` = `order_goods`.`good_id`
+		LEFT JOIN `order_status` on `order_status`.`id` = `orders`.`order_status`  
+		LEFT JOIN `delivery_methods` ON `orders`.`delivery_method` = `delivery_methods`.`id` 
+		LEFT JOIN `payment_methods` ON `orders`.`payment_method` = `payment_methods`.`id` 
+		 ";
+		//Пришлось все джоины заменить на левые, потому что если хоть чего-то не хватает, например не указан способ доставки, или оплаты, то заказ не отображается, потому что любой иннер, если нет пересечения, убивает нафиг все предыдущие результаты.
 		if($order_id === 'draft'){
 			$where_statement = "WHERE `orders`.`order_status`=1 AND `orders`.`user_id` = " . $user_id; //ну там, вдруг будет более одного черновика, берем первый попавшийся. Хотя не должно быть больше одного
 		} else {
 			$where_statement = "WHERE `orders`.`id` = " . (int)$order_id . " AND `orders`.`user_id` = " . $user_id;
 		}
 		$query .= $where_statement;
-
+		//echo 'запрос: ' . $query;
 		//Мы задаем два условия, номер заказа и айди юзера. Таким образом, если юзер захочет посмотреть не свой заказ, просто вбив  в адресную строку номер заказа, то увидит кукиш. МОжно видеть только те заказы, которые соответствуют твоему айдишнику из $security_pass		
 		/*Это тот случай, когда запрос специфический, и блин проще просто дать текст запроса, чем бить на парамерты, потом оратно их конвертировать в запрос. МОжно было и разбить, но блин запарился.*/
 		$result = $this->read_any_table_ready_query($query);
@@ -159,13 +167,22 @@ class Orders_data extends Database_master
 		$result = mysqli_query($link, $query);
 		//var_dump(mysqli_error_list($link));
 		$total_amount = mysqli_fetch_assoc($result)['total_amount'];
-		//echo $total_amount;
+		/*Короче, проблема. Если мы удалили все товары из заказа, то запрос дает нам НУЛЛ.*/
+		//echo 'Новая сумма:' . $total_amount . '<br>';
+		//echo 'Тип переменой новой суммы:' .gettype($total_amount) . '<br>';
+
+		if($total_amount === NULL) { //на тот случай, если в заказе сейчас нет товаров, тогда подсчет суммы даст нам нулл
+			$total_amount = 0;
+		}
 		//var_dump($result);
 		//var_dump($total_amount);
 		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`=" . $order_id;
 		//echo 'запрос на апдейт суммы:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
-		//var_dump(mysqli_error_list($link));
+		echo 'Попытка апдейта суммы, ошибки: ';
+		var_dump(mysqli_error_list($link));
+		echo '<br>';
+
 		return (bool)$result;
 	}
 
@@ -217,8 +234,11 @@ class Orders_data extends Database_master
 		if (isset($_POST['goods']['good_id'])) {
 			foreach ($_POST['goods']['good_id'] as $key => $value) {
 				if ( in_array($value, $goods_to_delete) ) {
-					continue;
+					continue; //Если товар помечен на удаление, то идем дальше
 				} else {
+					if ( (int)$_POST['goods']['good_count'][$key] <= 0){ //блин как же геморно этот ПОСТ разбирать
+						$goods_to_delete[] = $value;
+					}
 					$goods_to_update[] = array(
 							'table' => 'order_goods',
 							'keyvalue' => array(
@@ -288,6 +308,8 @@ class Orders_data extends Database_master
 	public function add_good_to_draft($good_id)
 	{
 		global $link;
+		$order_id_subquery = $this->get_draft_id_subquery();
+		$order_id = mysqli_fetch_assoc( mysqli_query($link, $order_id_subquery))['id'];
 		$insert_params = array( //функция вставки принимает массив массивов, на случай вставления многих значений. Если вставляем одно, то массив с одним массивом
 			'table' => 'order_goods',
 			'keyvalue' =>
