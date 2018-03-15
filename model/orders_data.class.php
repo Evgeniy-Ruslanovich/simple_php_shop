@@ -38,7 +38,6 @@ class Orders_data extends Database_master
 		$result = $this->read_any_table($query_params);
 
 		return $result;
-
 	}
 
 	public function get_public_single_order($order_id)
@@ -280,4 +279,30 @@ class Orders_data extends Database_master
 		$result = $this->read_any_table($query_params);
 		return $result;
 	}*/
+	public function add_good_to_draft($good_id)
+	{
+		global $link;
+		$insert_params = array( //функция вставки принимает массив массивов, на случай вставления многих значений. Если вставляем одно, то массив с одним массивом
+			'table' => 'order_goods',
+			'keyvalue' =>
+				array(
+					array(
+						'order_id' => $this->get_draft_id_subquery(),
+						'good_id' => (int)$good_id,
+						'good_count' => 1
+					)
+				)
+			);
+		$result = $this->insert_new_entry($insert_params, true); //true здесь это флаг, который говорит, что мы используем подзапрос, и поэтому не надо окавычивать вводимые данные. Все данные у наз безопасны сейчас.
+		if(!$result){
+			global $link;
+			$error_list = mysqli_error_list($link);
+			if($error_list[0]['errno'] === 1062) {
+				return 'already_exists';
+			}			
+			return (bool)$result;
+		}
+		$this->recount_order_summ($order_id);
+		return (bool)$result;
+	}
 }

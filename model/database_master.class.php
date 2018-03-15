@@ -120,27 +120,33 @@ class Database_master {
 		return $string;//тут надо потом дописать
 	}
 
-	protected /*public*/ function one_entry_values_array_to_string($one_entry_values_array){ //array_to_comma_separated_list_whith_quotes
+	protected /*public*/ function one_entry_values_array_to_string($one_entry_values_array, $use_subquery = false){ //array_to_comma_separated_list_whith_quotes
 		global $link;
 		$escaped_array = array();
 		foreach ($one_entry_values_array as $value) {
 			$escaped_array[] = mysqli_real_escape_string($link, $value);
 		}
-		$string = implode('\', \'', $escaped_array);
-		$string = '\'' . $string . '\' ';
-				
+		if ($use_subquery) {
+			$string = implode(', ' , $escaped_array) . ' ';
+		} else {
+			$string = implode('\', \'', $escaped_array);
+			$string = '\'' . $string . '\' ';
+		}
+				//к сожалению, эта функция сыграла со мной злую шутку, из-за того, что все берется в кавычки, я теперь не могу вставить вместо айдишника подзапрос. (собственно, для того кавычки эти и нужны епта, чтоб не было инъекций. Но блин когда я сам хочу сделать "инъекцию", то хрен тебе) Придется убирать кавычки, и проверять безопасность уровнем выше.
+				//надо подумать еще, что с этим делать.
 		return $string;//тут надо потом дописать
 	}
 
-	protected /*public*/ function few_entries_values_array_to_string($few_entries_values_array) //из массива разделенных запятой значений, в строку, где эти значения в скобках через запятую - VALUES ('1','2','3'),('1','2','3'),('1','2','3'). $few_entries_values_array - это массив массивов
+	protected /*public*/ function few_entries_values_array_to_string($few_entries_values_array, $use_subquery = false) //из массива разделенных запятой значений, в строку, где эти значения в скобках через запятую - VALUES ('1','2','3'),('1','2','3'),('1','2','3'). $few_entries_values_array - это массив массивов
 	{
 		$new_strings_array = array();
 		foreach ($few_entries_values_array as $one_entry_values_array) {
-			$new_strings_array[] = $this->one_entry_values_array_to_string($one_entry_values_array);
+			$new_strings_array[] = $this->one_entry_values_array_to_string($one_entry_values_array, $use_subquery);
 		}
 		$string = implode('), (', $new_strings_array);
 		$string = '(' . $string . ')';
 		return $string;
+
 	}
 
 	/*Короче, предыдущей функции columns_array_to_string() хватало ровно до того момента, как  не решил сделать джоин. тогда пришлось резко усложнять всю систему. Заново писать уже слишком долго, так что сделали вот такую заплатку. Вообще, мне кажется, идея с единым классом для базы слишком геморная, надо бует переходить потом на PDO или ORM. Но, я хотя бы попытаюсь))
@@ -211,29 +217,26 @@ class Database_master {
 		} else {
 			$query = "DELETE FROM `" . $params['table'] . "` " . $params['where'];	
 		}
-		echo 'Запрос на удаление: ' . $query;
-		echo '<br>';
+		//echo 'Запрос на удаление: ' . $query;
+		//echo '<br>';
 		$result = mysqli_query($link, $query);
 		/*
 		echo 'Список ошибок при удалении: '; var_dump($error_list);
 		echo '<br>';*/
 	}
 
-	protected function insert_new_entry($params)
+	protected function insert_new_entry($params, $use_subquery = false)
 	{
 		//$query = "INSERT INTO `{$TABLE}` (column1, column2, column3) VALUES ('1','2','3'),('1','2','3')";
 		global $link;
-		$query = $this->build_insert_query($params);
-		$result = mysqli_query($link, $query);
-		echo $query . '<br>';
-		
+		$query = $this->build_insert_query($params, $use_subquery);
+		$result = mysqli_query($link, $query);		
 		$error_list = mysqli_error_list ($link);
-		echo 'Список ошибок: '; var_dump($error_list);
-		echo '<br>';
-		return $result;
+		return (bool)$result;
+		
 	}
 
-	protected function build_insert_query($params)
+	protected function build_insert_query($params, $use_subquery = false)
 	{
 		//global $link;
 		/*params = array(
@@ -256,7 +259,9 @@ class Database_master {
 			$columns[] = $key;
 		}
 		$columns_string = $this->columns_array_to_string($columns);
-		$values_string = $this->few_entries_values_array_to_string($values);
+		$values_string = $this->few_entries_values_array_to_string($values, $use_subquery);
+		
+
 		$query .= '(' . $columns_string . ')' . ' VALUES ' . $values_string;
 		return $query;
 	}
