@@ -16,7 +16,7 @@ class Security_pass extends Database_master
 	protected $passw;
 	public  $user_name;
 	protected $user_role;
-	protected $user_permissions;
+	protected $user_permissions = null;
 	protected $auth_status = false;
 	public $error = false;
 
@@ -147,14 +147,44 @@ class Security_pass extends Database_master
 			'where' => 'WHERE `id`=\'' . $this->user_role .'\''
 			);
 		$result = $this->read_any_table($query_params)[0];
+		$this->user_permissions = $result;
+		//var_dump($result);
 		return $result;
 	}
 
-	public function chek_permission($permission_needed)
+	public function check_permission($permission_needed)
 	{
-		$permission_array = $this->get_permissions();
+		if ( is_null($this->user_permissions) ){
+			$permission_array = $this->get_permissions();
+		} else {
+			$permission_array = $this->user_permissions;
+		}
 
 		return (bool)$permission_array[$permission_needed];//теоретически,эта функция должна работать
+	}
+
+	public function get_permitted_statuses() {
+		if ( is_null($this->user_permissions) ){
+			$this->get_permissions();
+		}
+		$statuses = $this->user_permissions['order_status_allowed_to_see'];
+		return $statuses;
+	}
+
+	public function get_permitted_to_change_statuses() {
+		if ( is_null($this->user_permissions) ){
+			$this->get_permissions();
+		}
+		$statuses = $this->user_permissions['order_status_allowed_to_change'];
+		return $statuses;
+	}
+
+	public function get_permitted_to_set_statuses() {
+		if ( is_null($this->user_permissions) ){
+			$this->get_permissions();
+		}
+		$statuses = $this->user_permissions['order_status_allowed_to_set'];
+		return $statuses;
 	}
 
 	public function get_role()

@@ -131,7 +131,7 @@ class Order_controller //extends Database_master
 			}
 			/*В сессии будет корзина, это массив, где ключи - это айди товара в виде целого числа (пользователь может смухлевать на клиенте, и заменить айди, которое посылается через ПОСТ, на товар, которого нет в магазине, но я хрен знает, что с этим делать, можно ходить каждый раз в базу и проверять наличие такого товара. Пока не будем этим заморачиваться.*/
 			if (isset($_POST['good_id'])) {
-				var_dump($_POST);
+				//var_dump($_POST);
 				if (isset($_SESSION['cart'][(int)$_POST['good_id']])) { //случай. когда товар уже есть в корзине
 					$this->output_data['message'] = 'Товар уже есть в корзине';
 					$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
@@ -163,9 +163,9 @@ class Order_controller //extends Database_master
 
 			*/
 			/*должно что-то такое получитьсяINSERT INTO `order_goods`(`order_id`, `good_id`, `good_count`) VALUES ((SELECT `id` FROM `orders` WHERE `user_id`=4 AND `order_status`=1 LIMIT 1),8,1)*/
-			echo "<br><b>POST:  </b> ";
-			var_dump($_POST);
-			echo "<br>";
+			//echo "<br><b>POST:  </b> ";
+			//var_dump($_POST);
+			//echo "<br>";
 			$this->template = 'shop_message.php';
 			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a> | <a href="./">Перейти в магазин</a>';
 			if(isset($_POST['good_id'])){
@@ -173,9 +173,9 @@ class Order_controller //extends Database_master
 				$order_data = new Orders_data();
 				$result = $order_data->add_good_to_draft((int)$_POST['good_id']);
 
-				echo "<br><b>$result возвращаемый в контроллер  </b> ";
-				var_dump($result);
-				echo "<br>";
+				//echo "<br><b>$result возвращаемый в контроллер  </b> ";
+				//var_dump($result);
+				//echo "<br>";
 
 				if ($result === 'already_exists') {
 					$this->output_data['message'] = 'Товар уже есть в корзине.';
@@ -197,7 +197,7 @@ class Order_controller //extends Database_master
 			$this->output_data['message'] = 'edit_draft_detail';
 			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
 			$this->template = 'shop_message.php';
-			var_dump($_POST);
+			//var_dump($_POST);
 		}
 
 		protected function edit_draft_goods()
@@ -205,7 +205,7 @@ class Order_controller //extends Database_master
 			$this->output_data['message'] = 'edit_draft_goods';
 			$this->output_data['suggested_link'] = '<a href="./?ctrl=ordering&action=cart">Просмотреть корзину</a>';
 			$this->template = 'shop_message.php';
-			var_dump($_POST);
+			//var_dump($_POST);
 		}
 
 		protected function edit_draft()

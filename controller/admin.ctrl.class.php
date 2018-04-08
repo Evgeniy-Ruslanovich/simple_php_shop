@@ -36,8 +36,29 @@ class Admin_controller //extends Database_master
 	//Обработка заказов
 	protected function open_orders_handler($action) {
 		/*action get list*/
-		$this->output_data['example_subctrl'] = 'Заказы';
-		$this->template = 'admin_default_tpl.php';
+		global $security_pass;
+		$permission = $security_pass->check_permission('view_orders');
+		if($permission) {
+			$function_names = array(
+			'default' => 'get_orders_list',
+			'list' => 'get_goods_list',
+			'good' => 'get_single_good',
+			'new_good' => 'create_new_good',
+			'edit_good' => 'edit_good',
+			'delete_good' => 'delete_good');
+		$function = (isset($function_names[$action])) ? $function_names[$action] : $function_names['default'];
+		$this->$function();
+		} else {
+			$this->not_permitted();
+		}
+		/*
+		require_once(MODEL_DIR . '/orders_data.class.php');
+		$orders_data = new Orders_data();
+		$orders_list_array = $orders_data->get_admin_orders_list();
+		var_dump($orders_list_array);
+		$this->output_data['example_subctrl'] = 'Заказы. Есть разрешение: ' . $permission;
+		$this->output_data['orders_list_array'] = $orders_list_array;
+		$this->template = 'admin_orders_tpl.php';*/
 		/*$query_params = array(
 			'table' => 'orders',
 			'columns' => array('id', 'user_id', 'order_time', 'total_amount', 'order_status'),
@@ -49,7 +70,15 @@ class Admin_controller //extends Database_master
 		}
 
 		protected function get_orders_list() {
-
+			global $security_pass;
+			$permission = $security_pass->check_permission('view_orders');
+			require_once(MODEL_DIR . '/orders_data.class.php');
+			$orders_data = new Orders_data();
+			$orders_list_array = $orders_data->get_admin_orders_list();
+			var_dump($orders_list_array);
+			$this->output_data['example_subctrl'] = 'Заказы. Есть разрешение: ' . $permission;
+			$this->output_data['orders_list_array'] = $orders_list_array;
+			$this->template = 'admin_orders_tpl.php';
 		}
 
 		protected function edit_order(){
@@ -72,8 +101,10 @@ class Admin_controller //extends Database_master
 		$function = (isset($function_names[$action])) ? $function_names[$action] : $function_names['default'];
 		
 		//echo $function . '<br>';
-		$this->$function_names[$action]();
+		//$this->$function_names[$action]();
+		$this->$function();
 		}
+
 		protected function create_new_good(){
 			echo "Новый товар";
 		}
@@ -128,8 +159,13 @@ class Admin_controller //extends Database_master
 		$this->template = 'admin_default_tpl.php';
 	}
 
-		protected function open_roles_management($action) {
+	protected function open_roles_management($action) {
 		$this->output_data['example_subctrl'] = 'Роли';
+		$this->template = 'admin_default_tpl.php';
+	}
+
+	protected function not_permitted() {
+		$this->output_data['example_subctrl'] = 'У вас нет допуска для этого действия';
 		$this->template = 'admin_default_tpl.php';
 	}
 }

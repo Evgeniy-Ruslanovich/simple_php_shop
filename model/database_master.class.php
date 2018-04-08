@@ -85,7 +85,7 @@ class Database_master {
 	{
 		global $link;
 		$query = 'SELECT '; //пробелы ставятся ПОСЛЕ каждого элемента, а не до, не путаться
-		if (count($params['columns'])) {
+		if (isset($params['columns']) && count($params['columns'])) {
 			$escaped_array = array();
 			foreach ($params['columns'] as $value) {
 				$escaped_array[] = mysqli_real_escape_string($link, $value);//хз надо оно или нет

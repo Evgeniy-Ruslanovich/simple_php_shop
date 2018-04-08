@@ -40,6 +40,41 @@ class Orders_data extends Database_master
 		return $result;
 	}
 
+	public function get_admin_orders_list($params = []) {
+
+		$query_params = array('table' => 'orders');
+		//$query_params['columns'] = array('orders.id', 'order_time', 'total_amount', 'paid', 'order_status.status_name_rus');//Если хотим выбрать ВСЕ, то массив надо оставлять ПУСТЫМ. Мы ЖОСКА задаем поля, и вообще все что можно задать, чтобы ократить до минимума пользовательский ввод в базу. Юзер, по сути, вводит только свой плогин-пароль, и комментарий к заказу.. пока что.
+		//$query_params['hidden'] = 0; //
+		
+		//$query_params['where'] = $this->build_where_statement_for_public_goods_list($orders_params);
+		if(isset($params) && count($params)){
+			$query_params['where'] = "WHERE ";
+			if(isset($params['used_id'])){
+				$query_params['where'] .= "`orders`.`user_id`=" . (int)$params['used_id'] . " ";
+			}
+			if(isset($params['order_status']) && count($params['order_status'])){
+				$statuses_need = $params['order_status'];
+			} else {
+				$statuses_need = 'all_permitted';
+			}
+			global $security_pass;
+			$permitted_statuses = $security_pass->get_permitted_statuses();
+			if ($permitted_statuses === 'all') {
+				foreach ($statuses_need as $status) {
+					$query_params['where'] .= '';
+				}
+			}
+		}
+		
+		//$query_params['where'] = "WHERE `orders`.`user_id`=" . $user_id;
+		$query_params['join'] = "INNER JOIN `order_status` ON `orders`.`order_status` = `order_status`.`id`";
+		//$query_params['order_by'] = null;
+		$result = $this->read_any_table($query_params);
+
+		return $result;
+	}
+
+
 	public function get_public_single_order($order_id)
 	{
 		global $security_pass;
@@ -103,7 +138,7 @@ class Orders_data extends Database_master
 	{
 		global $security_pass;
 		global $link;
-		$this->hello_test();
+		//$this->hello_test();
 		$order_params = array('table' => 'orders');
 		$order_params['keyvalue'] = array(
 					array(
@@ -179,9 +214,9 @@ class Orders_data extends Database_master
 		$query = "UPDATE " . DB_NAME . ".`orders` SET `total_amount`='" . $total_amount . "' WHERE `id`=" . $order_id;
 		//echo 'запрос на апдейт суммы:' . $query . '<br>';
 		$result = mysqli_query($link, $query);
-		echo 'Попытка апдейта суммы, ошибки: ';
-		var_dump(mysqli_error_list($link));
-		echo '<br>';
+		//echo 'Попытка апдейта суммы, ошибки: ';
+		//var_dump(mysqli_error_list($link));
+		//echo '<br>';
 
 		return (bool)$result;
 	}
